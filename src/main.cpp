@@ -1,6 +1,34 @@
 #include "Chip8.hpp"
+#include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <iostream>
 #include <exception>
+#include <cmath>
+#include <vector>
+
+/// @brief Считывает текущее состояние клавиатуры ПК и обновляет состояние keypad в эмуляторе.
+/// @param emulator Ссылка на объект эмулятора CHIP-8.
+void updateKeypad(Chip8& emulator) {
+    emulator.keypad[0x1] = sf::Keyboard::isKeyPressed(sf::Keyboard::Num1);
+    emulator.keypad[0x2] = sf::Keyboard::isKeyPressed(sf::Keyboard::Num2);
+    emulator.keypad[0x3] = sf::Keyboard::isKeyPressed(sf::Keyboard::Num3);
+    emulator.keypad[0xC] = sf::Keyboard::isKeyPressed(sf::Keyboard::Num4);
+
+    emulator.keypad[0x4] = sf::Keyboard::isKeyPressed(sf::Keyboard::Q);
+    emulator.keypad[0x5] = sf::Keyboard::isKeyPressed(sf::Keyboard::W);
+    emulator.keypad[0x6] = sf::Keyboard::isKeyPressed(sf::Keyboard::E);
+    emulator.keypad[0xD] = sf::Keyboard::isKeyPressed(sf::Keyboard::R);
+
+    emulator.keypad[0x7] = sf::Keyboard::isKeyPressed(sf::Keyboard::A);
+    emulator.keypad[0x8] = sf::Keyboard::isKeyPressed(sf::Keyboard::S);
+    emulator.keypad[0x9] = sf::Keyboard::isKeyPressed(sf::Keyboard::D);
+    emulator.keypad[0xE] = sf::Keyboard::isKeyPressed(sf::Keyboard::F);
+
+    emulator.keypad[0xA] = sf::Keyboard::isKeyPressed(sf::Keyboard::Z);
+    emulator.keypad[0x0] = sf::Keyboard::isKeyPressed(sf::Keyboard::X);
+    emulator.keypad[0xB] = sf::Keyboard::isKeyPressed(sf::Keyboard::C);
+    emulator.keypad[0xF] = sf::Keyboard::isKeyPressed(sf::Keyboard::V);
+}
 
 int main(int argc, char** argv) {
     if (argc != 2) {
@@ -12,21 +40,76 @@ int main(int argc, char** argv) {
         Chip8 emulator;
         std::string romPath = argv[1];
         
-        // Заменяем обратные слеши на прямые, если пользователь ввел их по ошибке
         for (char& c : romPath) {
             if (c == '\\') c = '/';
         }
 
-        std::cout << "Попытка загрузки ROM: " << romPath << "\n";
         emulator.loadRom(romPath);
-        std::cout << "ROM успешно загружен. Запуск эмуляции...\n";
 
-        // Простой цикл для демонстрации. В реальном приложении здесь будет SDL2/Qt цикл
-        for (int i = 0; i < 10; ++i) {
-            emulator.emulateCycle();
+        // Оригинальный экран CHIP-8 равен 64x32. Масштабируем его в 10 раз до 640x320.
+        sf::RenderWindow window(sf::VideoMode(640, 320), "CHIP-8 Emulator");
+        window.setFramerateLimit(60);
+
+        // Программная генерация звукового тона синусоиды (440 Гц, нота Ля)
+        const unsigned sampleRate = 44100;
+        std::vector<sf::Int16> samples(sampleRate);
+        for (size_t i = 0; i < samples.size(); ++i) {
+            double time = static_cast<double>(i) / sampleRate;
+            // Постоянная Пи берется как 3.1415926535
+            samples[i] = static_cast<sf::Int16>(20000 * std::sin(2 * 3.1415926535 * 440.0 * time));
         }
-        
-        std::cout << "Эмуляция завершена успешно.\n";
+
+        sf::SoundBuffer soundBuffer;
+        if (!soundBuffer.loadFromSamples(samples.data(), samples.size(), 1, sampleRate)) {
+            throw std::runtime_error("Ошибка инициализации звукового движка SFML.");
+        }
+
+        sf::Sound beep;
+        beep.setBuffer(soundBuffer);
+        beep.setLoop(true);
+
+        // Настройка геометрии одного виртуального пикселя размера 10x10
+        sf::RectangleShape pixel(sf::Vector2f(10.0f, 10.0f));
+        pixel.setFillColor(sf::Color::White);
+
+        while (window.isOpen()) {
+            sf::Event event;
+            while (window.pollEvent(event)) {
+                if (event.type == sf::Event::Closed) {
+                    window.close();
+                }
+            }
+
+            updateKeypad(emulator);
+
+            // За один кадр (1/60 сек) выполняем 10 циклов процессора (~600 Гц)
+            for (int i = 0; i < 10; ++i) {
+                emulator.emulateCycle();
+            }
+
+            // Проверка звукового таймера CHIP-8
+            if (emulator.soundTimer > 0) {
+                if (beep.getStatus() != sf::Sound::Playing) {
+                    beep.play();
+                }
+            } else {
+                beep.stop();
+            }
+
+            window.clear(sf::Color::Black);
+
+            // Отрисовка графического буфера
+            for (int y = 0; y < 32; ++y) {
+                for (int x = 0; x < 64; ++x) {
+                    if (emulator.display[x + y * 64]) {
+                        pixel.setPosition(x * 10.0f, y * 10.0f);
+                        window.draw(pixel);
+                    }
+                }
+            }
+
+            window.display();
+        }
 
     } catch (const std::exception& e) {
         std::cerr << "Критическая ошибка: " << e.what() << "\n";

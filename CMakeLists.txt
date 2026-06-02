@@ -1,14 +1,18 @@
 cmake_minimum_required(VERSION 3.14)
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+
 project(Chip8Emulator CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Настройка кодировки UTF-8 для MSVC (если вдруг будет собираться там)
 if(MSVC)
     add_compile_options(/utf-8)
 endif()
+
+# Поиск SFML в системе
+find_package(SFML 2.5 COMPONENTS graphics window system audio REQUIRED)
 
 # Скачивание Doctest через CMake
 include(FetchContent)
@@ -19,13 +23,13 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(doctest)
 
-# Основная библиотека (чтобы тестировать тот же код)
+# Основная библиотека
 add_library(Chip8Lib src/Chip8.cpp)
 target_include_directories(Chip8Lib PUBLIC include)
 
-# Исполняемый файл
+# Исполняемый файл эмулятора
 add_executable(chip8_emu src/main.cpp)
-target_link_libraries(chip8_emu PRIVATE Chip8Lib)
+target_link_libraries(chip8_emu PRIVATE Chip8Lib sfml-graphics sfml-window sfml-system sfml-audio)
 
 # Тесты
 enable_testing()
