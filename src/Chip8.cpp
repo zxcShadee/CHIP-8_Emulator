@@ -70,17 +70,17 @@ void Chip8::emulateCycle() {
         throw std::runtime_error("Ошибка: Выход за пределы памяти (PC out of bounds).");
     }
 
-    // Fetch (Выборка опкода)
+    
     uint16_t opcode = (memory[pc] << 8) | memory[pc + 1];
 
-    // Разбор компонентов инструкции
+    
     uint16_t x = (opcode & 0x0F00) >> 8;
     uint16_t y = (opcode & 0x00F0) >> 4;
     uint16_t nnn = opcode & 0x0FFF;
     uint8_t kk = opcode & 0x00FF;
     uint8_t nibble = opcode & 0x000F;
 
-    // Настройка генератора случайных чисел
+    
     static std::random_device rd;
     static std::mt19937 gen(rd());
     std::uniform_int_distribution<uint8_t> dist(0, 255);
@@ -196,7 +196,6 @@ void Chip8::emulateCycle() {
                 for (unsigned int col = 0; col < 8; col++) {
                     uint8_t spritePixel = spriteByte & (0x80 >> col);
                     if (spritePixel) {
-                        // Клиппинг границ экрана для предотвращения выхода за границы массива
                         if (xCoord + col < 64 && yCoord + row < 32) {
                             uint32_t index = (xCoord + col) + (yCoord + row) * 64;
                             if (display[index] == 1) {
