@@ -13,7 +13,7 @@
 1. Установите необходимые зависимости сборки. Пример для Fedora:
    `sudo dnf install gcc-c++ cmake git doxygen clang-tools-extra`
 2. Склонируйте репозиторий и перейдите в папку:
-   `git clone <url-вашего-репозитория> chip8`
+   `git clone <repo-url> chip8`
    `cd chip8`
 3. Выполните сборку:
    `mkdir build && cd build`
