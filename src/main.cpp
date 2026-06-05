@@ -46,16 +46,13 @@ int main(int argc, char** argv) {
 
         emulator.loadRom(romPath);
 
-        // Оригинальный экран CHIP-8 равен 64x32. Масштабируем его в 10 раз до 640x320.
         sf::RenderWindow window(sf::VideoMode(640, 320), "CHIP-8 Emulator");
         window.setFramerateLimit(60);
 
-        // Программная генерация звукового тона синусоиды (440 Гц, нота Ля)
         const unsigned sampleRate = 44100;
         std::vector<sf::Int16> samples(sampleRate);
         for (size_t i = 0; i < samples.size(); ++i) {
             double time = static_cast<double>(i) / sampleRate;
-            // Постоянная Пи берется как 3.1415926535
             samples[i] = static_cast<sf::Int16>(20000 * std::sin(2 * 3.1415926535 * 440.0 * time));
         }
 
@@ -68,7 +65,6 @@ int main(int argc, char** argv) {
         beep.setBuffer(soundBuffer);
         beep.setLoop(true);
 
-        // Настройка геометрии одного виртуального пикселя размера 10x10
         sf::RectangleShape pixel(sf::Vector2f(10.0f, 10.0f));
         pixel.setFillColor(sf::Color::White);
 
@@ -82,12 +78,10 @@ int main(int argc, char** argv) {
 
             updateKeypad(emulator);
 
-            // За один кадр (1/60 сек) выполняем 10 циклов процессора (~600 Гц)
             for (int i = 0; i < 10; ++i) {
                 emulator.emulateCycle();
             }
 
-            // Проверка звукового таймера CHIP-8
             if (emulator.soundTimer > 0) {
                 if (beep.getStatus() != sf::Sound::Playing) {
                     beep.play();
@@ -98,7 +92,6 @@ int main(int argc, char** argv) {
 
             window.clear(sf::Color::Black);
 
-            // Отрисовка графического буфера
             for (int y = 0; y < 32; ++y) {
                 for (int x = 0; x < 64; ++x) {
                     if (emulator.display[x + y * 64]) {
