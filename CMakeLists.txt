@@ -11,10 +11,10 @@ if(MSVC)
     add_compile_options(/utf-8)
 endif()
 
-# Поиск SFML в системе
+
 find_package(SFML 2.5 COMPONENTS graphics window system audio REQUIRED)
 
-# Скачивание Doctest через CMake
+
 include(FetchContent)
 FetchContent_Declare(
     doctest
@@ -23,22 +23,22 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(doctest)
 
-# Основная библиотека
+
 add_library(Chip8Lib src/Chip8.cpp)
 target_include_directories(Chip8Lib PUBLIC include)
 
-# Исполняемый файл эмулятора
+
 add_executable(chip8_emu src/main.cpp)
 target_link_libraries(chip8_emu PRIVATE Chip8Lib sfml-graphics sfml-window sfml-system sfml-audio)
 
-# Тесты
+
 enable_testing()
 add_executable(chip8_tests tests/test_chip8.cpp)
 target_link_libraries(chip8_tests PRIVATE Chip8Lib doctest::doctest)
 
 add_test(NAME Chip8Tests COMMAND chip8_tests)
 
-# Документация (Doxygen)
+
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
     set(DOXYGEN_GENERATE_HTML YES)
