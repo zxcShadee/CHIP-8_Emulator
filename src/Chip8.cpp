@@ -98,67 +98,66 @@ void Chip8::emulateCycle() {
                 stack.pop_back();
                 pc += 2;
             } else {
-                // Старые системные вызовы на некоторых ROM игнорируем
                 pc += 2;
             }
             break;
 
-        case 0x1000: // 1nnn - JP addr
+        case 0x1000: 
             pc = nnn;
             break;
 
-        case 0x2000: // 2nnn - CALL addr
+        case 0x2000: 
             stack.push_back(pc);
             pc = nnn;
             break;
 
-        case 0x3000: // 3xkk - SE Vx, byte
+        case 0x3000: 
             pc += (V[x] == kk) ? 4 : 2;
             break;
 
-        case 0x4000: // 4xkk - SNE Vx, byte
+        case 0x4000: 
             pc += (V[x] != kk) ? 4 : 2;
             break;
 
-        case 0x5000: // 5xy0 - SE Vx, Vy
+        case 0x5000:
             pc += (V[x] == V[y]) ? 4 : 2;
             break;
 
-        case 0x6000: // 6xkk - LD Vx, byte
+        case 0x6000: 
             V[x] = kk;
             pc += 2;
             break;
 
-        case 0x7000: // 7xkk - ADD Vx, byte
+        case 0x7000: 
             V[x] += kk;
             pc += 2;
             break;
 
         case 0x8000:
             switch (nibble) {
-                case 0x0: V[x] = V[y]; break;  // 8xy0 - LD Vx, Vy
-                case 0x1: V[x] |= V[y]; break; // 8xy1 - OR Vx, Vy
-                case 0x2: V[x] &= V[y]; break; // 8xy2 - AND Vx, Vy
-                case 0x3: V[x] ^= V[y]; break; // 8xy3 - XOR Vx, Vy
-                case 0x4: {                    // 8xy4 - ADD Vx, Vy (Carry flag)
+                case 0x0: V[x] = V[y]; break;  
+                case 0x1: V[x] |= V[y]; break; 
+                case 0x2: V[x] &= V[y]; break; 
+                case 0x3: V[x] ^= V[y]; break; 
+                case 0x4: {                    
                     uint16_t sum = V[x] + V[y];
                     V[0xF] = (sum > 255) ? 1 : 0;
                     V[x] = sum & 0xFF;
                     break;
                 }
-                case 0x5:                      // 8xy5 - SUB Vx, Vy
+                case 0x5:                      
                     V[0xF] = (V[x] > V[y]) ? 1 : 0;
                     V[x] -= V[y];
                     break;
-                case 0x6:                      // 8xy6 - SHR Vx
+                case 0x6:                      
                     V[0xF] = V[x] & 0x1;
                     V[x] >>= 1;
                     break;
-                case 0x7:                      // 8xy7 - SUBN Vx, Vy
+                case 0x7:                      
                     V[0xF] = (V[y] > V[x]) ? 1 : 0;
                     V[x] = V[y] - V[x];
                     break;
-                case 0xE:                      // 8xyE - SHL Vx
+                case 0xE:                      
                     V[0xF] = (V[x] & 0x80) >> 7;
                     V[x] <<= 1;
                     break;
@@ -168,25 +167,25 @@ void Chip8::emulateCycle() {
             pc += 2;
             break;
 
-        case 0x9000: // 9xy0 - SNE Vx, Vy
+        case 0x9000: 
             pc += (V[x] != V[y]) ? 4 : 2;
             break;
 
-        case 0xA000: // Annn - LD I, addr
+        case 0xA000: 
             I = nnn;
             pc += 2;
             break;
 
-        case 0xB000: // Bnnn - JP V0, addr
+        case 0xB000: 
             pc = nnn + V[0];
             break;
 
-        case 0xC000: // Cxkk - RND Vx, byte
+        case 0xC000: 
             V[x] = dist(gen) & kk;
             pc += 2;
             break;
 
-        case 0xD000: { // Dxyn - DRW Vx, Vy, nibble
+        case 0xD000: { 
             uint8_t xCoord = V[x] % 64;
             uint8_t yCoord = V[y] % 32;
             V[0xF] = 0;
@@ -199,7 +198,7 @@ void Chip8::emulateCycle() {
                         if (xCoord + col < 64 && yCoord + row < 32) {
                             uint32_t index = (xCoord + col) + (yCoord + row) * 64;
                             if (display[index] == 1) {
-                                V[0xF] = 1; // Коллизия обнаружена
+                                V[0xF] = 1; 
                             }
                             display[index] ^= 1;
                         }
@@ -211,9 +210,9 @@ void Chip8::emulateCycle() {
         }
 
         case 0xE000:
-            if (kk == 0x9E) {      // Ex9E - SKP Vx
+            if (kk == 0x9E) {      
                 pc += (keypad[V[x]]) ? 4 : 2;
-            } else if (kk == 0xA1) { // ExA1 - SKNP Vx
+            } else if (kk == 0xA1) { 
                 pc += (!keypad[V[x]]) ? 4 : 2;
             } else {
                 goto unknown_opcode;
@@ -222,12 +221,12 @@ void Chip8::emulateCycle() {
 
         case 0xF000:
             switch (kk) {
-                case 0x07: V[x] = delayTimer; break; // Fx07 - LD Vx, DT
-                case 0x15: delayTimer = V[x]; break; // Fx15 - LD DT, Vx
-                case 0x18: soundTimer = V[x]; break; // Fx18 - LD ST, Vx
-                case 0x1E: I += V[x]; break;         // Fx1E - ADD I, Vx
+                case 0x07: V[x] = delayTimer; break; 
+                case 0x15: delayTimer = V[x]; break; 
+                case 0x18: soundTimer = V[x]; break; 
+                case 0x1E: I += V[x]; break;         
                 
-                case 0x0A: {                         // Fx0A - LD Vx, K (Ожидание кнопки)
+                case 0x0A: {                         
                     bool keyPressed = false;
                     for (int i = 0; i < 16; ++i) {
                         if (keypad[i]) {
@@ -236,26 +235,26 @@ void Chip8::emulateCycle() {
                             break;
                         }
                     }
-                    if (!keyPressed) return; // Блокируем шаг PC, пока кнопка не нажата
+                    if (!keyPressed) return; 
                     break;
                 }
-                case 0x29: // Fx29 - LD F, Vx (Установка I на адрес спрайта символа)
+                case 0x29: 
                     I = 0x50 + (V[x] * 5);
                     break;
 
-                case 0x33: // Fx33 - LD B, Vx (BCD представление числа)
+                case 0x33: 
                     memory[I]     = V[x] / 100;
                     memory[I + 1] = (V[x] / 10) % 10;
                     memory[I + 2] = V[x] % 10;
                     break;
 
-                case 0x55: // Fx55 - LD [I], Vx (Сохранение регистров в память)
+                case 0x55: 
                     for (uint16_t i = 0; i <= x; ++i) {
                         memory[I + i] = V[i];
                     }
                     break;
 
-                case 0x65: // Fx65 - LD Vx, [I] (Чтение регистров из памяти)
+                case 0x65: 
                     for (uint16_t i = 0; i <= x; ++i) {
                         V[i] = memory[I + i];
                     }
